@@ -1,0 +1,25 @@
+{
+  "name": "shipengine-tracking-alexa-skill",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1", 
+    "zip": "", 
+    "awsDeploy": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AustinBratcher/shipengine-tracking-alexa-skill.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AustinBratcher/shipengine-tracking-alexa-skill/issues"
+  },
+  "homepage": "https://github.com/AustinBratcher/shipengine-tracking-alexa-skill#readme",
+  "dependencies": {
+    "alexa-sdk": "^1.0.21",
+    "shipengine": "0.0.1"
+  }
+}
