@@ -13,11 +13,6 @@ function generateTrackingStatement(data) {
 }
 
 const handlers = {
-    "StartIntent": function() {
-        this.response.speak(`${CARRIER_PROMPT}?`)
-            .listen(`I'm sorry, I didn't hear you. ${CARRIER_PROMPT}?`); 
-        this.emit(':responseReady'); 
-    },
     "CarrierIntent": function() {
         // get tracking number
         var trackingNum = this.attributes['trackingNum']; 
@@ -90,9 +85,6 @@ const handlers = {
             }
         }
     },
-    "CombinedIntent": function() {
-
-    },  
     "LaunchRequest" : function() {
         this.response.speak(`Welcome to Ship Engine Tracking. ${CARRIER_PROMPT}?`)
             .listen(`I'm sorry, I didn't hear you. ${CARRIER_PROMPT}?`); 
