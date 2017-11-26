@@ -1,3 +1,5 @@
+// 1Z37V1V60301364248   
+
 'use strict';
 const Alexa = require('alexa-sdk');
 const APP_ID = 'shipengine-tracking';  
@@ -9,75 +11,65 @@ const CARRIER_PROMPT = "What shipping provider would you like to track a package
 const TRACKING_PROMPT = "What is your tracking number"
 
 function generateTrackingStatement(data) {
-    var temp = `${data.tracking_number} is ${data.status_description}`;
+    // var verb = data.status_code == "DE" ? "was" : "is"; 
+
+    var temp = `${data.carrier_status_description}`;
 }
 
 const handlers = {
-    "CarrierIntent": function() {
-        // get tracking number
-        var trackingNum = this.attributes['trackingNum']; 
-        if(!trackingNum && this.event.request.intent.slots.trackingNumber) {
-            // see if tracking num is in a slot
-            truckingNum = this.events.request.intent.slots.trackingNumber.value; 
-        }
-        
-        // get carrier
-        var original = this.event.request.intent.slots.carrierName.value.split(' ').join('');
-        var carrier = original.replace('.', '_'); 
-        
-        
-        if(!shipEngine.validTrackingCarrier(carrier)) {
-            this.response.speak(`Sorry, but we are currently unable to provide tracking information for packages delieverd by ${original}`); 
-            this.emit(':responseReady'); 
-        }
-        else {
-            this.attributes['carrier'] = carrier;
-           
-            if(!trackingNum) {
-                this.response.speak(`Great. ${TRACKING_PROMPT} for ${original}?`)
-                    .listen(`Sorry, I didn't hear that. ${TRACKING_PROMPT} for ${original}?`);
-                this.emit(':responseReady');
-            }
-            else {
-               // We have both!
-                shipEngine.trackPackage(carrier, trackingNum).then((data)=>{
-                    this.response.speak(genereateTrackingStatement(data)); 
-                    this.emit(':responseReady'); 
-                }).catch((err)=>{
-                    console.log(err);
-                });
-            }
-        }
-    },
-    "TrackIntent" : function() {
-        // get carrier 
-        var carrier = this.attributes['carrier'];
-        if(!carrier && this.event.request.intent.slots.carrierName) {
-            // see if carrier is in slot
-            var original = this.event.request.intent.slots.carrierName.value.split(' ').join('');
-            carrier = original.replace('.', '_'); 
-        } 
+    "LaunchRequest" : function() {
+        console.log('Track Intent Requested'); 
 
-        // TOOD come up with way to validate tracking number
-        // TODO consider confirming tracking number with user
-        // get tracking number
-        var trackingNum = this.event.request.intent.slots.trackingNumber.value.split(' ').join(''); 
-        this.attributes['trackingNum'] = trackingNum; 
-        
-        if(!carrier) {
-            // We have a tracking number, but not a carrier
-            this.response.speak(`Great. ${CARRIER_PROMPT}?`);
-            this.emit(':responseReady');
+        this.response.speak(`Welcome to Ship Station. What would you like to do?`)ß
+            .listen(`I'm sorry, I didn't hear you. What would you like to do?`); 
+        this.emit(':responseReady'); 
+    }, 
+    "TrackIntent" : function() {
+
+        console.log('Track Intent Requested'); 
+        console.log(this.event.request);
+        console.log(this.event.request.intent.slots);
+        console.log(this.event.request.dialogState); 
+        Object.keys(this.event.request.intent.slots).forEach((slot) =>{
+            console.log(this.event.request.intent.slots[slot]); 
+        });
+
+        if(this.event.request.dialogState == "STARTED" || this.event.request.dialogState == "IN_PROGRESS") {
+            console.log('Dialog incomplete'); 
+            this.context.succeed({
+                "response": {
+                    "directives": [
+                        {
+                            "type": "Dialog.Delegate"
+                        }
+                    ],
+                    "shouldEndSession": false
+                },
+                "sessionAttributes": {}
+            });
         }
         else {
+            console.log('Dialog completed'); 
+            // get carrier and tracking Num
+            var originalCarrier = this.event.request.intent.slots.carrierName.value.split(' ').join('');
+            var carrier = originalCarrier.replace('.', '_');
+
+            // TOOD come up with way to validate tracking number
+            // TODO consider confirming tracking number with user
+            var trackingNum = this.event.request.intent.slots.trackingNumber.value.split(' ').join('');
+
             // we have both! query! 
             if(!shipEngine.validTrackingCarrier(carrier)) {
-                this.response.speak(`Sorry, but we are currently unable to provide tracking information for packages delieverd by ${original}`); 
+                this.response.speak(`Sorry, but we are currently unable to provide tracking information for packages delieverd by ${originalCarrier}`); 
                 this.emit(':responseReady'); 
             }
             else {
                 shipEngine.trackPackage(carrier, trackingNum).then((data)=>{
-                    this.response.speak(genereateTrackingStatement(data)); 
+                    console.log(data);
+                    if(data.status_code == "UN") {
+                        this.response.speak(`Sorry, but we were unable to gather tracking information for the ${originalCarrier} tracking number ${trackingNum}`); 
+                    } 
+                    else this.response.speak(generateTrackingStatement(data)); 
                     this.emit(':responseReady'); 
                 }).catch((err)=>{
                     console.log(err);
@@ -85,10 +77,31 @@ const handlers = {
             }
         }
     },
-    "LaunchRequest" : function() {
-        this.response.speak(`Welcome to Ship Engine Tracking. ${CARRIER_PROMPT}?`)
-            .listen(`I'm sorry, I didn't hear you. ${CARRIER_PROMPT}?`); 
-        this.emit(':responseReady'); 
+    'AMAZON.HelpIntent': function () {
+        const speechOutput = "Help Intent";
+        const reprompt = "Help Reprompt";
+        this.response.speak(speechOutput).listen(reprompt);
+        this.emit(':responseReady');
+    },
+    'AMAZON.CancelIntent': function () {
+        this.response.speak("Cancel Intent");
+        this.emit(':responseReady');
+    },
+    'AMAZON.StopIntent': function () {
+        this.response.speak("Stop Intent");
+        this.emit(':responseReady');
+    },
+    'SessionEndedRequest': function () {
+        console.log('Session Ended Request'); 
+        console.log(this.event.request);
+        console.log(this.event.request.intent.slots);
+        console.log(this.event.request.dialogState); 
+        Object.keys(this.event.request.intent.slots).forEach((slot) =>{
+            console.log(this.event.request.intent.slots[slot]); 
+        });
+
+        this.response.speak("Session Ended");
+        this.emit(':responseReady');
     }
 
 };
